@@ -1,0 +1,24 @@
+{
+  "image_info": {
+    "width": 400,
+    "height": 400,
+    "original_area": 18153
+  },
+  "approximation_metrics": {
+    "number_of_circles": 1,
+    "iou_score": 0.9304995020703392,
+    "fitness_score": 0.9881814279228154
+  },
+  "circles": [
+    {
+      "id": 1,
+      "center": {
+        "x": 180.53447017837124,
+        "y": 199.96532581324573
+      },
+      "radius": 86.76868862933563,
+      "diameter": 173.53737725867126,
+      "area": 23652.43950389747
+    }
+  ]
+}

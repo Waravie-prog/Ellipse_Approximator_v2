@@ -1,0 +1,34 @@
+{
+  "image_info": {
+    "width": 400,
+    "height": 400,
+    "original_area": 21665
+  },
+  "approximation_metrics": {
+    "number_of_circles": 2,
+    "iou_score": 1.0,
+    "fitness_score": 1.05
+  },
+  "circles": [
+    {
+      "id": 1,
+      "center": {
+        "x": 250.4449299781034,
+        "y": 200.66848088483258
+      },
+      "radius": 60.94855974511087,
+      "diameter": 121.89711949022174,
+      "area": 11670.15884909865
+    },
+    {
+      "id": 2,
+      "center": {
+        "x": 150.44258296020627,
+        "y": 200.7384356645656
+      },
+      "radius": 60.731798448598,
+      "diameter": 121.463596897196,
+      "area": 11587.297482402078
+    }
+  ]
+}
