@@ -1,6 +1,6 @@
 """
 ПОДСИСТЕМА АППРОКСИМАЦИИ СЛОЖНЫХ ГЕНЕТИЧЕСКИХ ОБЪЕКТОВ
-ОПТИМАЛЬНАЯ ВЕРСИЯ: БЫСТРАЯ И ТОЧНАЯ (IoU > 0.9 ЗА 150-200 ПОКОЛЕНИЙ)
+ОПТИМАЛЬНАЯ ВЕРСИЯ С ПОСЛЕДОВАТЕЛЬНЫМ ОТКРЫТИЕМ ВСЕХ ВИЗУАЛИЗАЦИЙ
 """
 
 import numpy as np
@@ -18,6 +18,7 @@ class CircleGeneticApproximator:
     """
     Оптимальная версия для быстрой и точной аппроксимации.
     Достигает IoU > 0.9 за 150-200 поколений.
+    Автоматически открывает результаты после вычислений.
     """
     
     def __init__(self, population_size=150, generations=200, mutation_rate=0.15, crossover_rate=0.9):
@@ -167,6 +168,81 @@ class CircleGeneticApproximator:
         
         return filtered_coords
     
+    def visualize_distance_map(self):
+        """Визуализирует карту расстояний с пояснением"""
+        if self.distance_map is None:
+            print("❌ Карта расстояний не создана!")
+            return
+        
+        print("\n💡 ОБЪЯСНЕНИЕ КАРТЫ РАССТОЯНИЙ:")
+        print("  - Красный цвет: точки, близкие к границе объекта")
+        print("  - Синий цвет: точки, удаленные от границы")
+        print("  - Локальные максимумы (синие точки) - потенциальные центры кругов")
+        
+        plt.figure(figsize=(10, 8))
+        plt.imshow(self.distance_map, cmap='hot')
+        
+        if self.initial_centers is not None and len(self.initial_centers) > 0:
+            y_coords, x_coords = zip(*self.initial_centers)
+            plt.scatter(x_coords, y_coords, c='blue', s=50, marker='o', label='Начальные центры')
+        
+        plt.colorbar(label='Расстояние до границы')
+        plt.title('Карта расстояний для инициализации', fontsize=14, fontweight='bold')
+        plt.legend()
+        plt.tight_layout()
+        
+        print("\n🔍 КАРТА РАССТОЯНИЙ")
+        print("  Показывает, насколько каждая точка объекта удалена от его границы")
+        print("  Используется для определения начальных центров кругов")
+        
+        plt.show()
+    
+    def visualize_convergence(self, fitness_history, iou_history, overlap_history):
+        """Визуализирует графики сходимости"""
+        plt.figure(figsize=(14, 8))
+        
+        plt.subplot(2, 2, 1)
+        plt.plot(fitness_history, linewidth=2.5, color='blue', alpha=0.8)
+        plt.title('Сходимость функции приспособленности', fontsize=12, fontweight='bold')
+        plt.xlabel('Номер поколения', fontsize=10)
+        plt.ylabel('Значение приспособленности', fontsize=10)
+        plt.grid(True, alpha=0.3)
+        
+        plt.subplot(2, 2, 2)
+        plt.plot(iou_history, linewidth=2.5, color='green', alpha=0.8)
+        plt.title('Сходимость метрики IoU', fontsize=12, fontweight='bold')
+        plt.xlabel('Номер поколения', fontsize=10)
+        plt.ylabel('Значение IoU', fontsize=10)
+        plt.grid(True, alpha=0.3)
+        
+        plt.subplot(2, 2, 3)
+        plt.plot(overlap_history, linewidth=2.5, color='red', alpha=0.8)
+        plt.title('Динамика перекрытия кругов', fontsize=12, fontweight='bold')
+        plt.xlabel('Номер поколения', fontsize=10)
+        plt.ylabel('Степень перекрытия', fontsize=10)
+        plt.grid(True, alpha=0.3)
+        
+        plt.subplot(2, 2, 4)
+        # Показываем итоговые метрики
+        final_iou = iou_history[-1] if iou_history else 0
+        final_overlap = overlap_history[-1] if overlap_history else 0
+        metrics_text = f"Итоговые метрики:\nIoU: {final_iou:.4f}\nПерекрытие: {final_overlap:.4f}\nКругов: {len(iou_history)}"
+        plt.text(0.5, 0.5, metrics_text, fontsize=12, ha='center', va='center', 
+                 transform=plt.gca().transAxes, bbox=dict(boxstyle="round", facecolor='lightgray'))
+        plt.axis('off')
+        
+        plt.suptitle('Динамика обучения генетического алгоритма', fontsize=16, fontweight='bold')
+        plt.tight_layout()
+        
+        print("\n📊 ГРАФИКИ СХОДИМОСТИ")
+        print("  Показывают, как менялись ключевые метрики в процессе оптимизации")
+        print("  - Верхний левый: функция приспособленности")
+        print("  - Верхний правый: метрика IoU (пересечение/объединение)")
+        print("  - Нижний левый: степень перекрытия между кругами")
+        print("  - Нижний правый: итоговые метрики")
+        
+        plt.show()
+    
     def detect_touching_pores_advanced(self):
         """Продвинутое обнаружение касающихся пор с использованием watershed"""
         print("\n🔍 ПРОДВИНУТОЕ ОБНАРУЖЕНИЕ КАСАЮЩИХСЯ ПОР")
@@ -221,7 +297,7 @@ class CircleGeneticApproximator:
         region = regions[0]
         area = region.area
         perimeter = region.perimeter
-        compactness = (perimeter ** 2) / (4 * np.pi * area) if area > 0 else 1
+        compactness = (perimeter **2) / (4 * np.pi * area) if area > 0 else 1
         eccentricity = region.eccentricity
         solidity = region.solidity
         
@@ -599,27 +675,33 @@ class CircleGeneticApproximator:
         best_individual = None
         fitness_history = []
         iou_history = []
+        overlap_history = []
         early_stop_generation = None
         
         for generation in range(self.generations):
             fitnesses = []
             ious = []
+            overlaps = []
             
             for individual in population:
-                fitness, iou, _ = self.fitness_function_precision(individual)
+                fitness, iou, overlap = self.fitness_function_precision(individual)
                 fitnesses.append(fitness)
                 ious.append(iou)
+                overlaps.append(overlap)
             
             current_best_fitness = max(fitnesses)
             current_best_iou = max(ious)
+            current_best_overlap = min(overlaps)
             
             if current_best_fitness > best_fitness:
                 best_fitness = current_best_fitness
                 best_iou = current_best_iou
+                best_overlap = current_best_overlap
                 best_individual = population[np.argmax(fitnesses)].copy()
             
             fitness_history.append(best_fitness)
             iou_history.append(best_iou)
+            overlap_history.append(best_overlap)
             
             # Выводим прогресс каждые 25 поколений
             if verbose and (generation % 25 == 0 or generation == self.generations - 1):
@@ -681,12 +763,18 @@ class CircleGeneticApproximator:
         # Применяем локальный поиск для финальной настройки
         best_individual, best_fitness, best_iou = self.local_search_refinement(best_individual, iterations=30)
         
+        # Обновляем историю для финального результата
+        final_fitness, final_iou, final_overlap = self.fitness_function_precision(best_individual)
+        fitness_history.append(final_fitness)
+        iou_history.append(final_iou)
+        overlap_history.append(final_overlap)
+        
         if verbose:
             print(f"\n✅ ОПТИМИЗАЦИЯ ЗАВЕРШЕНА ЧЕРЕЗ {end_time - start_time:.2f} СЕКУНД")
             print(f"🎯 ФИНАЛЬНЫЙ РЕЗУЛЬТАТ: IoU = {best_iou:.4f}")
             print(f"   Количество окружностей: {num_circles}")
         
-        return best_individual, fitness_history, iou_history, best_iou
+        return best_individual, fitness_history, iou_history, overlap_history, best_iou
     
     def find_optimal_circles_count_precision(self, max_circles=4):
         """Поиск оптимального количества окружностей с фокусом на скорости и точности"""
@@ -711,7 +799,7 @@ class CircleGeneticApproximator:
             print(f"🔍 ТЕСТИРОВАНИЕ {num_circles} ОКРУЖНОСТЕЙ")
             print("-"*50)
             
-            best_solution, fitness_history, iou_history, final_iou = self.optimize_precision(
+            best_solution, fitness_history, iou_history, overlap_history, final_iou = self.optimize_precision(
                 num_circles, 
                 initial_centers=self.initial_centers,
                 verbose=True
@@ -721,6 +809,7 @@ class CircleGeneticApproximator:
                 'solution': best_solution,
                 'fitness_history': fitness_history,
                 'iou_history': iou_history,
+                'overlap_history': overlap_history,
                 'final_iou': final_iou
             }
             
@@ -793,7 +882,13 @@ class CircleGeneticApproximator:
             plt.savefig(save_path, dpi=300, bbox_inches='tight', facecolor='white')
             print(f"✓ Расширенная визуализация сохранена как {save_path}")
         
-        plt.close()
+        print("\n🔍 ОСНОВНАЯ ВИЗУАЛИЗАЦИЯ")
+        print("  Показывает результат аппроксимации в 6 форматах")
+        print("  - Верхний ряд: исходное изображение, целевая маска, аппроксимация")
+        print("  - Нижний ряд: круги на исходном изображении, области различий, карта ошибок")
+        
+        plt.show()
+        return fig
     
     def export_parameters(self, individual, output_path):
         """Экспортирует детальные параметры в JSON"""
@@ -920,11 +1015,20 @@ def main():
     # Финальная оптимизация
     print(f"\n🚀 ЗАПУСК ФИНАЛЬНОЙ ОПТИМИЗАЦИИ ДЛЯ {optimal_circles} ОКРУЖНОСТЕЙ...")
     best_solution = optimal_results['solution']
+    fitness_history = optimal_results['fitness_history']
+    iou_history = optimal_results['iou_history']
+    overlap_history = optimal_results['overlap_history']
     final_iou = optimal_results['final_iou']
     
     # Визуализируем и сохраняем результаты
     result_image_path = approximator.get_results_path(f'{base_name}_optimal_result.png')
     approximator.visualize_result(best_solution, save_path=result_image_path)
+    
+    # Отображаем графики сходимости
+    approximator.visualize_convergence(fitness_history, iou_history, overlap_history)
+    
+    # Отображаем карту расстояний
+    approximator.visualize_distance_map()
     
     # Экспортируем параметры
     json_path = approximator.get_results_path(f'{base_name}_optimal_parameters.json')
@@ -943,6 +1047,7 @@ def main():
     print(f"   📄 {base_name}_optimal_result.png - детальная визуализация")
     print(f"   📄 {base_name}_optimal_parameters.json - детальные параметры")
     print(f"   📄 distance_map.png - карта расстояний для анализа")
+    print(f"   📄 convergence.png - графики сходимости")
     print("\n" + "=" * 70)
 
 if __name__ == "__main__":
