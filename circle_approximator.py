@@ -1,6 +1,6 @@
 """
 ПОДСИСТЕМА АППРОКСИМАЦИИ СЛОЖНЫХ ГЕНЕТИЧЕСКИХ ОБЪЕКТОВ
-ОПТИМАЛЬНАЯ ВЕРСИЯ С ПОСЛЕДОВАТЕЛЬНЫМ ОТКРЫТИЕМ ВСЕХ ВИЗУАЛИЗАЦИЙ
+ВЕРСИЯ С ДВУМЯ ОКНАМИ ВИЗУАЛИЗАЦИИ
 """
 
 import numpy as np
@@ -16,9 +16,10 @@ warnings.filterwarnings('ignore')
 
 class CircleGeneticApproximator:
     """
-    Оптимальная версия для быстрой и точной аппроксимации.
-    Достигает IoU > 0.9 за 150-200 поколений.
-    Автоматически открывает результаты после вычислений.
+    Версия с двумя окнами визуализации:
+    1. Основная визуализация с 6 видами представления
+    2. Дополнительное окно с параметрами окружностей
+    Все файлы сохраняются в папку результатов.
     """
     
     def __init__(self, population_size=150, generations=200, mutation_rate=0.15, crossover_rate=0.9):
@@ -39,7 +40,7 @@ class CircleGeneticApproximator:
         self.distance_map = None
         self.initial_centers = None
         
-        print("⚡ ИНИЦИАЛИЗАЦИЯ ОПТИМАЛЬНОЙ ВЕРСИИ")
+        print("⚡ ИНИЦИАЛИЗАЦИЯ ФИНАЛЬНОЙ ВЕРСИИ")
         print(f"  Размер популяции: {population_size} (оптимальный баланс)")
         print(f"  Количество поколений: {generations} (быстрая сходимость)")
         print(f"  Стратегия: скорость + качество")
@@ -53,7 +54,7 @@ class CircleGeneticApproximator:
             print(f"✓ Создана папка за дату: {date_folder}")
         
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        run_folder = f"optimal_{base_name}_{timestamp}"
+        run_folder = f"final_{base_name}_{timestamp}"
         
         self.results_dir = os.path.join(date_folder, run_folder)
         os.makedirs(self.results_dir, exist_ok=True)
@@ -197,8 +198,8 @@ class CircleGeneticApproximator:
         
         plt.show()
     
-    def visualize_convergence(self, fitness_history, iou_history, overlap_history):
-        """Визуализирует графики сходимости"""
+    def visualize_convergence(self, fitness_history, iou_history, overlap_history, save_path=None):
+        """Визуализирует графики сходимости и сохраняет файл"""
         plt.figure(figsize=(14, 8))
         
         plt.subplot(2, 2, 1)
@@ -226,7 +227,7 @@ class CircleGeneticApproximator:
         # Показываем итоговые метрики
         final_iou = iou_history[-1] if iou_history else 0
         final_overlap = overlap_history[-1] if overlap_history else 0
-        metrics_text = f"Итоговые метрики:\nIoU: {final_iou:.4f}\nПерекрытие: {final_overlap:.4f}\nКругов: {len(iou_history)}"
+        metrics_text = f"Итоговые метрики:\nIoU: {final_iou:.4f}\nПерекрытие: {final_overlap:.4f}"
         plt.text(0.5, 0.5, metrics_text, fontsize=12, ha='center', va='center', 
                  transform=plt.gca().transAxes, bbox=dict(boxstyle="round", facecolor='lightgray'))
         plt.axis('off')
@@ -240,6 +241,10 @@ class CircleGeneticApproximator:
         print("  - Верхний правый: метрика IoU (пересечение/объединение)")
         print("  - Нижний левый: степень перекрытия между кругами")
         print("  - Нижний правый: итоговые метрики")
+        
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            print(f"✓ Графики сходимости сохранены как {save_path}")
         
         plt.show()
     
@@ -482,6 +487,7 @@ class CircleGeneticApproximator:
                         text_color = [255, 255, 255]
                         outline_color = [0, 0, 0]
                         
+                        # Рисуем обводку
                         for dx in [-1, 0, 1]:
                             for dy in [-1, 0, 1]:
                                 if dx == 0 and dy == 0:
@@ -491,7 +497,6 @@ class CircleGeneticApproximator:
                                 result_image[y_text, x_text] = outline_color
                         
                         result_image[y_original, x_original] = text_color
-                        
                 except Exception as e:
                     continue
                     
@@ -830,32 +835,38 @@ class CircleGeneticApproximator:
         return best_circles, best_results[best_circles]
     
     def visualize_result(self, individual, save_path=None):
-        """Расширенная визуализация результатов"""
+        """Основная визуализация результатов (первое окно с 6 видами представления)"""
         fig, axes = plt.subplots(2, 3, figsize=(18, 12))
         
+        # 1. Исходное изображение
         axes[0, 0].imshow(self.original_image, cmap='gray' if len(self.original_image.shape) == 2 else None)
         axes[0, 0].set_title('Исходное изображение', fontsize=12, fontweight='bold')
         axes[0, 0].axis('off')
         
+        # 2. Целевая маска
         axes[0, 1].imshow(self.target_mask, cmap='viridis')
         axes[0, 1].set_title('Целевая маска', fontsize=12, fontweight='bold')
         axes[0, 1].axis('off')
         
+        # 3. Аппроксимация кругами
         approximation = self.draw_circles(individual)
         axes[0, 2].imshow(approximation, cmap='plasma')
         axes[0, 2].set_title('Аппроксимация кругами', fontsize=12, fontweight='bold')
         axes[0, 2].axis('off')
         
+        # 4. Наложение на оригинальное изображение
         result_with_circles = self.draw_circles_on_original(individual)
         axes[1, 0].imshow(result_with_circles)
         axes[1, 0].set_title('Круги на исходном изображении', fontsize=12, fontweight='bold')
         axes[1, 0].axis('off')
         
+        # 5. Области различий
         difference = np.logical_xor(self.target_mask, approximation)
         axes[1, 1].imshow(difference, cmap='Reds')
         axes[1, 1].set_title('Области различий (ошибки)', fontsize=12, fontweight='bold')
         axes[1, 1].axis('off')
         
+        # 6. Карта ошибок
         error_map = np.zeros_like(self.target_mask, dtype=float)
         error_map[np.logical_and(self.target_mask, np.logical_not(approximation))] = 1.0
         error_map[np.logical_and(np.logical_not(self.target_mask), approximation)] = -1.0
@@ -865,12 +876,13 @@ class CircleGeneticApproximator:
         axes[1, 2].axis('off')
         plt.colorbar(im, ax=axes[1, 2], label='Тип ошибки')
         
+        # Вычисляем метрики качества
         iou = np.sum(np.logical_and(self.target_mask, approximation)) / \
               np.sum(np.logical_or(self.target_mask, approximation))
         
         num_circles = len(individual) // 3
         plt.suptitle(
-            f'Результат аппроксимации ({num_circles} кругов)\nIoU: {iou:.4f}', 
+            f'Результат аппроксимации ({num_circles} кругов)\nIoU: {iou:.3f}', 
             fontsize=16, 
             fontweight='bold',
             y=0.95
@@ -878,14 +890,83 @@ class CircleGeneticApproximator:
         
         plt.tight_layout()
         
+        # Сохраняем изображение
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight', facecolor='white')
-            print(f"✓ Расширенная визуализация сохранена как {save_path}")
+            print(f"✓ Основная визуализация сохранена как {save_path}")
         
         print("\n🔍 ОСНОВНАЯ ВИЗУАЛИЗАЦИЯ")
         print("  Показывает результат аппроксимации в 6 форматах")
         print("  - Верхний ряд: исходное изображение, целевая маска, аппроксимация")
         print("  - Нижний ряд: круги на исходном изображении, области различий, карта ошибок")
+        
+        plt.show()
+        return fig, result_with_circles
+    
+    def visualize_circle_parameters(self, result_with_circles, individual, save_path=None):
+        """Второе окно: изображение с кругами + таблица параметров окружностей"""
+        fig, (ax_image, ax_table) = plt.subplots(1, 2, figsize=(16, 8), gridspec_kw={'width_ratios': [1, 1]})
+        
+        # 1. Изображение с кругами (повтор из первого окна)
+        ax_image.imshow(result_with_circles)
+        ax_image.set_title('Круги на исходном изображении', fontsize=14, fontweight='bold')
+        ax_image.axis('off')
+        
+        # 2. Таблица с параметрами окружностей
+        num_circles = len(individual) // 3
+        table_data = []
+        table_headers = ['ID', 'Центр X', 'Центр Y', 'Радиус (пикс)', 'Диаметр (пикс)', 'Площадь (пикс²)']
+        
+        for i in range(num_circles):
+            x, y, radius = individual[i*3:(i+1)*3]
+            
+            # Преобразуем координаты в систему координат оригинального изображения
+            x_original = float(x) + self.bbox[1]  # min_col
+            y_original = float(y) + self.bbox[0]  # min_row
+            
+            diameter = 2 * radius
+            area = np.pi * radius ** 2
+            
+            table_data.append([
+                f"{i+1}",
+                f"{x_original:.1f}",
+                f"{y_original:.1f}",
+                f"{radius:.1f}",
+                f"{diameter:.1f}",
+                f"{area:.1f}"
+            ])
+        
+        # Создаем таблицу
+        ax_table.axis('off')
+        table = ax_table.table(
+            cellText=table_data,
+            colLabels=table_headers,
+            cellLoc='center',
+            loc='center',
+            bbox=[0.1, 0.2, 0.8, 0.6]
+        )
+        
+        # Стилизация таблицы
+        table.auto_set_font_size(False)
+        table.set_fontsize(10)
+        table.auto_set_column_width(col=list(range(len(table_headers))))
+        
+        # Заголовок таблицы
+        ax_table.set_title('Параметры сгенерированных окружностей', fontsize=14, fontweight='bold', pad=20)
+        
+        plt.suptitle('Детальная информация об окружностях', fontsize=16, fontweight='bold')
+        plt.tight_layout()
+        
+        # Сохраняем изображение
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight', facecolor='white')
+            print(f"✓ Визуализация параметров окружностей сохранена как {save_path}")
+        
+        print("\n📊 ДЕТАЛЬНАЯ ИНФОРМАЦИЯ ОБ ОКРУЖНОСТЯХ")
+        print("  Второе окно содержит:")
+        print("  - Левая часть: изображение с кругами (как в первом окне)")
+        print("  - Правая часть: таблица с параметрами каждой окружности")
+        print("  В таблице показаны координаты центров и радиусы в пикселях")
         
         plt.show()
         return fig
@@ -960,8 +1041,8 @@ class CircleGeneticApproximator:
 def main():
     """Основная функция программы"""
     print("=" * 70)
-    print("⚡ ОПТИМАЛЬНАЯ ВЕРСИЯ ПОДСИСТЕМЫ АППРОКСИМАЦИИ")
-    print("   Высокая точность за минимальное время (150-200 поколений)")
+    print("🎯 ФИНАЛЬНАЯ ВЕРСИЯ ПОДСИСТЕМЫ АППРОКСИМАЦИИ")
+    print("   Два окна визуализации с сохранением всех файлов")
     print("=" * 70)
     
     # Инициализируем аппроксиматор с оптимальными параметрами
@@ -1020,18 +1101,23 @@ def main():
     overlap_history = optimal_results['overlap_history']
     final_iou = optimal_results['final_iou']
     
-    # Визуализируем и сохраняем результаты
-    result_image_path = approximator.get_results_path(f'{base_name}_optimal_result.png')
-    approximator.visualize_result(best_solution, save_path=result_image_path)
+    # Первое окно: основная визуализация с 6 видами представления
+    result_image_path = approximator.get_results_path(f'{base_name}_main_result.png')
+    fig1, result_with_circles = approximator.visualize_result(best_solution, save_path=result_image_path)
     
-    # Отображаем графики сходимости
-    approximator.visualize_convergence(fitness_history, iou_history, overlap_history)
+    # Второе окно: изображение с кругами + таблица параметров
+    parameters_image_path = approximator.get_results_path(f'{base_name}_circle_parameters.png')
+    fig2 = approximator.visualize_circle_parameters(result_with_circles, best_solution, save_path=parameters_image_path)
+    
+    # Отображаем и сохраняем графики сходимости
+    convergence_path = approximator.get_results_path(f'{base_name}_convergence.png')
+    approximator.visualize_convergence(fitness_history, iou_history, overlap_history, save_path=convergence_path)
     
     # Отображаем карту расстояний
     approximator.visualize_distance_map()
     
     # Экспортируем параметры
-    json_path = approximator.get_results_path(f'{base_name}_optimal_parameters.json')
+    json_path = approximator.get_results_path(f'{base_name}_final_parameters.json')
     approximator.export_parameters(best_solution, json_path)
     
     # Финальный отчет
@@ -1044,10 +1130,11 @@ def main():
     print(f"   Достигнутый IoU: {final_iou:.4f}")
     print(f"   Статус: {'🎯 ЦЕЛЬ ДОСТИГНУТА (IoU > 0.9)' if final_iou >= 0.9 else '⚠️ Требуется ручная проверка'}")
     print(f"\n💾 СОЗДАННЫЕ ФАЙЛЫ:")
-    print(f"   📄 {base_name}_optimal_result.png - детальная визуализация")
-    print(f"   📄 {base_name}_optimal_parameters.json - детальные параметры")
+    print(f"   📄 {base_name}_main_result.png - основная визуализация (6 видов)")
+    print(f"   📄 {base_name}_circle_parameters.png - второе окно с параметрами окружностей")
+    print(f"   📄 {base_name}_convergence.png - графики сходимости")
+    print(f"   📄 {base_name}_final_parameters.json - детальные параметры")
     print(f"   📄 distance_map.png - карта расстояний для анализа")
-    print(f"   📄 convergence.png - графики сходимости")
     print("\n" + "=" * 70)
 
 if __name__ == "__main__":
