@@ -1,0 +1,82 @@
+{
+  "image_info": {
+    "width": 400,
+    "height": 400,
+    "original_area": 24917,
+    "processing_time": "2025-12-21 02:36:12"
+  },
+  "approximation_metrics": {
+    "number_of_circles": 5,
+    "iou_score": 0.9886241597390716,
+    "precision": 0.9909886526899637,
+    "recall": 0.9974894260484738
+  },
+  "error_statistics": {
+    "extra_pixels": 224,
+    "uncovered_pixels": 62,
+    "extra_percentage": 0.8989846289681743,
+    "uncovered_percentage": 0.24882610266083396
+  },
+  "circles": [
+    {
+      "id": 1,
+      "center": {
+        "x": 160.0,
+        "y": 160.0
+      },
+      "radius": 45.604257426320345,
+      "diameter": 91.20851485264069,
+      "area": 6533.721966163681,
+      "coverage_of_circle": 1.0,
+      "coverage_of_target": 0.2548059557731669
+    },
+    {
+      "id": 2,
+      "center": {
+        "x": 237.85468743066326,
+        "y": 160.0
+      },
+      "radius": 48.110513356583326,
+      "diameter": 96.22102671316665,
+      "area": 7271.597885896421,
+      "coverage_of_circle": 0.9685834502103787,
+      "coverage_of_target": 0.2771601717702773
+    },
+    {
+      "id": 3,
+      "center": {
+        "x": 199.9922683967705,
+        "y": 202.4439947443023
+      },
+      "radius": 13.102875490127174,
+      "diameter": 26.205750980254347,
+      "area": 539.3654220674914,
+      "coverage_of_circle": 1.0,
+      "coverage_of_target": 0.02074888630252438
+    },
+    {
+      "id": 4,
+      "center": {
+        "x": 160.0,
+        "y": 240.0
+      },
+      "radius": 45.453093352879606,
+      "diameter": 90.90618670575921,
+      "area": 6490.4791997339935,
+      "coverage_of_circle": 1.0,
+      "coverage_of_target": 0.2548059557731669
+    },
+    {
+      "id": 5,
+      "center": {
+        "x": 240.0,
+        "y": 240.86738707005765
+      },
+      "radius": 45.453658692989286,
+      "diameter": 90.90731738597857,
+      "area": 6490.640656337772,
+      "coverage_of_circle": 1.0,
+      "coverage_of_target": 0.2548059557731669
+    }
+  ]
+}

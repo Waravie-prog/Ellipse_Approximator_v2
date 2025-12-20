@@ -781,35 +781,74 @@ class CircleGeneticApproximator:
         
         return best_individual, fitness_history, iou_history, overlap_history, best_iou
     
-    def find_optimal_circles_count_precision(self, max_circles=4):
-        """Поиск оптимального количества окружностей с фокусом на скорости и точности"""
-        print("\n" + "="*70)
-        print("🎯 ПОИСК ОПТИМАЛЬНОГО КОЛИЧЕСТВА ОКРУЖНОСТЕЙ")
-        print("="*70)
-        
+    def find_optimal_circles_count_precision(self, max_circles=6):  # Увеличен лимит до 6
+        """Поиск оптимального количества окружностей с корректной обработкой диапазонов"""
+        print("\n" + "="*80)
+        print("🎯 ПОИСК ОПТИМАЛЬНОГО КОЛИЧЕСТВА ОКРУЖНОСТЕЙ С МАКСИМАЛЬНОЙ ТОЧНОСТЬЮ")
+        print("="*80)
+    
+        # Продвинутая предобработка (теперь после создания папки результатов)
         self.preprocess_image_for_precision()
-        
+    
+        # Определяем начальное количество окружностей
         min_circles, recommended_circles = self.analyze_image_complexity()
-        max_test_circles = min(max_circles, recommended_circles + 1)  # Уменьшено максимальное количество
-        
+    
+        # Корректируем максимальное количество с учетом рекомендации
+        max_test_circles = min(max_circles, recommended_circles + 1)
+    
+        # Гарантируем, что min_circles <= max_test_circles
+        if min_circles > max_test_circles:
+            print(f"⚠️  Коррекция диапазона: min_circles ({min_circles}) > max_test_circles ({max_test_circles})")
+            min_circles = max(1, max_test_circles - 2)  # Уменьшаем min_circles
+            min_circles = max(1, min_circles)  # Гарантируем минимум 1
+    
         print(f"\n📊 ДИАПАЗОН ТЕСТИРОВАНИЯ: от {min_circles} до {max_test_circles} окружностей")
         print(f"🎯 РЕКОМЕНДОВАННОЕ КОЛИЧЕСТВО: {recommended_circles}")
-        
+    
         best_results = {}
         best_iou = 0
         best_circles = min_circles
+    
+        # Если рекомендованное количество выходит за рамки, проверяем его отдельно
+        if recommended_circles > max_test_circles:
+            print(f"🔍 ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА рекомендуемого количества: {recommended_circles} окружностей")
+            best_solution, fitness_history, iou_history, overlap_history, final_iou = self.optimize_precision(
+                recommended_circles, 
+                initial_centers=self.initial_centers,
+                verbose=True
+            )
         
+            best_results[recommended_circles] = {
+                'solution': best_solution,
+                'fitness_history': fitness_history,
+                'iou_history': iou_history,
+                'overlap_history': overlap_history,
+                'final_iou': final_iou
+            }
+        
+            print(f"  📊 Результат для {recommended_circles} окружностей: IoU = {final_iou:.4f}")
+        
+            if final_iou > best_iou:
+                best_iou = final_iou
+                best_circles = recommended_circles
+    
+        # Тестируем каждое количество окружностей в диапазоне
         for num_circles in range(min_circles, max_test_circles + 1):
-            print(f"\n" + "-"*50)
+            print(f"\n" + "-"*60)
             print(f"🔍 ТЕСТИРОВАНИЕ {num_circles} ОКРУЖНОСТЕЙ")
-            print("-"*50)
-            
+            print("-"*60)
+        
+            # Проверяем, не тестировали ли мы это количество уже
+            if num_circles in best_results:
+                print(f"  ℹ️  Количество {num_circles} уже протестировано ранее")
+                continue
+        
             best_solution, fitness_history, iou_history, overlap_history, final_iou = self.optimize_precision(
                 num_circles, 
                 initial_centers=self.initial_centers,
                 verbose=True
             )
-            
+        
             best_results[num_circles] = {
                 'solution': best_solution,
                 'fitness_history': fitness_history,
@@ -817,21 +856,21 @@ class CircleGeneticApproximator:
                 'overlap_history': overlap_history,
                 'final_iou': final_iou
             }
-            
+        
             print(f"  📊 Результат для {num_circles} окружностей: IoU = {final_iou:.4f}")
-            
+        
             if final_iou > best_iou:
                 best_iou = final_iou
                 best_circles = num_circles
-            
-            # Ранняя остановка при отличном результате
+        
+            # Если достигли отличного результата, останавливаемся
             if final_iou >= 0.94 and num_circles >= recommended_circles:
                 print(f"  🎯 ОТЛИЧНЫЙ РЕЗУЛЬТАТ ДОСТИГНУТ! IoU = {final_iou:.4f}")
                 break
-        
+    
         print(f"\n🏆 ВЫБРАНО ОПТИМАЛЬНОЕ КОЛИЧЕСТВО: {best_circles} окружностей")
         print(f"   Максимальный достигнутый IoU: {best_iou:.4f}")
-        
+    
         return best_circles, best_results[best_circles]
     
     def visualize_result(self, individual, save_path=None):
@@ -1091,7 +1130,7 @@ def main():
     
     # Поиск оптимального количества окружностей
     print("\n🎯 НАЧИНАЕМ ПОИСК ОПТИМАЛЬНОГО КОЛИЧЕСТВА ОКРУЖНОСТЕЙ...")
-    optimal_circles, optimal_results = approximator.find_optimal_circles_count_precision(max_circles=4)
+    optimal_circles, optimal_results = approximator.find_optimal_circles_count_precision(max_circles=6)
     
     # Финальная оптимизация
     print(f"\n🚀 ЗАПУСК ФИНАЛЬНОЙ ОПТИМИЗАЦИИ ДЛЯ {optimal_circles} ОКРУЖНОСТЕЙ...")

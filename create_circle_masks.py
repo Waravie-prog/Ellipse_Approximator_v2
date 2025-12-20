@@ -1,12 +1,13 @@
 """
-Генератор тестовых изображений с круглыми порами
-Создает 3 типа изображений с разной степенью пересечения пор
+ГЕНЕРАТОР ТЕСТОВЫХ ИЗОБРАЖЕНИЙ С КРУГЛЫМИ ПОРАМИ
+Создает 3 типа изображений с разной степенью пересечения пор + новые конфигурации с 3-4 порами
 """
 
 import numpy as np
 from skimage import draw, io, morphology
 import matplotlib.pyplot as plt
 import os
+import datetime
 
 def create_touching_pores():
     """Создает изображение с двумя порами, касающимися в одной точке"""
@@ -157,12 +158,298 @@ def create_single_pore():
     
     return image
 
+def create_three_touching_pores():
+    """Создает изображение с тремя порами, касающимися друг друга"""
+    print("Создаю изображение с тремя касающимися порами...")
+    
+    image = np.zeros((400, 400), dtype=np.uint8)
+    
+    # Параметры пор (расположены в вершинах равностороннего треугольника)
+    radius = 50
+    
+    # Центры пор: каждая пара касается в одной точке
+    center1_y, center1_x = 200, 150    # Верхняя пора
+    center2_y, center2_x = 250, 235    # Правая нижняя пора  
+    center3_y, center3_x = 150, 235    # Левая нижняя пора
+    
+    # Рисуем первую пору
+    rr, cc = draw.disk((center1_y, center1_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    # Рисуем вторую пору
+    rr, cc = draw.disk((center2_y, center2_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    # Рисуем третью пору
+    rr, cc = draw.disk((center3_y, center3_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    io.imsave('three_touching_pores.png', image)
+    print("✓ Создано изображение: 'three_touching_pores.png'")
+    
+    # Визуализация
+    plt.figure(figsize=(10, 8))
+    plt.imshow(image, cmap='gray')
+    plt.title('Три поры, касающиеся друг друга\n(расстояние между центрами = 100 пикселей)', 
+              fontsize=14, fontweight='bold')
+    plt.axis('off')
+    
+    # Расчет расстояний между центрами
+    dist12 = np.sqrt((center2_x - center1_x)**2 + (center2_y - center1_y)**2)
+    dist13 = np.sqrt((center3_x - center1_x)**2 + (center3_y - center1_y)**2)
+    dist23 = np.sqrt((center3_x - center2_x)**2 + (center3_y - center2_y)**2)
+    
+    plt.text(10, 370, f'Расстояние между центрами 1-2: {dist12:.1f} пикселей', 
+             fontsize=12, color='red', weight='bold', backgroundcolor='white')
+    plt.text(10, 385, f'Расстояние между центрами 1-3: {dist13:.1f} пикселей', 
+             fontsize=12, color='red', weight='bold', backgroundcolor='white')
+    plt.text(10, 400, f'Расстояние между центрами 2-3: {dist23:.1f} пикселей', 
+             fontsize=12, color='red', weight='bold', backgroundcolor='white')
+    
+    plt.savefig('three_touching_pores_preview.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    return image
+
+def create_three_slightly_overlapping_pores():
+    """Создает изображение с тремя порами, немного пересекающимися"""
+    print("Создаю изображение с тремя немного пересекающимися порами...")
+    
+    image = np.zeros((400, 400), dtype=np.uint8)
+    
+    radius = 55
+    
+    # Центры расположены ближе, чем 2*radius, для небольшого перекрытия
+    center1_y, center1_x = 200, 140    # Верхняя пора
+    center2_y, center2_x = 260, 220    # Правая нижняя пора  
+    center3_y, center3_x = 140, 220    # Левая нижняя пора
+    
+    rr, cc = draw.disk((center1_y, center1_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    rr, cc = draw.disk((center2_y, center2_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    rr, cc = draw.disk((center3_y, center3_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    io.imsave('three_slightly_overlapping_pores.png', image)
+    print("✓ Создано изображение: 'three_slightly_overlapping_pores.png'")
+    
+    # Визуализация
+    plt.figure(figsize=(10, 8))
+    plt.imshow(image, cmap='gray')
+    plt.title('Три поры, немного пересекающиеся\n(расстояние между центрами ~90 пикселей)', 
+              fontsize=14, fontweight='bold')
+    plt.axis('off')
+    
+    # Расчет расстояний и перекрытий
+    dist12 = np.sqrt((center2_x - center1_x)**2 + (center2_y - center1_y)**2)
+    dist13 = np.sqrt((center3_x - center1_x)**2 + (center3_y - center1_y)**2)
+    dist23 = np.sqrt((center3_x - center2_x)**2 + (center3_y - center2_y)**2)
+    
+    overlap12 = 2 * radius - dist12
+    overlap13 = 2 * radius - dist13
+    overlap23 = 2 * radius - dist23
+    
+    plt.text(10, 370, f'Расстояние 1-2: {dist12:.1f} пикселей', 
+             fontsize=12, color='red', weight='bold', backgroundcolor='white')
+    plt.text(10, 385, f'Расстояние 1-3: {dist13:.1f} пикселей', 
+             fontsize=12, color='red', weight='bold', backgroundcolor='white')
+    plt.text(10, 400, f'Расстояние 2-3: {dist23:.1f} пикселей', 
+             fontsize=12, color='red', weight='bold', backgroundcolor='white')
+    plt.text(250, 385, f'Перекрытие: ~{overlap12:.1f} пикселей', 
+             fontsize=12, color='blue', weight='bold', backgroundcolor='white')
+    
+    plt.savefig('three_slightly_overlapping_pores_preview.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    return image
+
+def create_three_highly_overlapping_pores():
+    """Создает изображение с тремя порами, сильно пересекающимися"""
+    print("Создаю изображение с тремя сильно пересекающимися порами...")
+    
+    image = np.zeros((400, 400), dtype=np.uint8)
+    
+    radius = 70
+    
+    # Центры расположены очень близко для сильного перекрытия
+    center1_y, center1_x = 200, 180    # Верхняя пора
+    center2_y, center2_x = 230, 220    # Правая нижняя пора  
+    center3_y, center3_x = 170, 220    # Левая нижняя пора
+    
+    rr, cc = draw.disk((center1_y, center1_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    rr, cc = draw.disk((center2_y, center2_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    rr, cc = draw.disk((center3_y, center3_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    io.imsave('three_highly_overlapping_pores.png', image)
+    print("✓ Создано изображение: 'three_highly_overlapping_pores.png'")
+    
+    # Визуализация
+    plt.figure(figsize=(10, 8))
+    plt.imshow(image, cmap='gray')
+    plt.title('Три поры, сильно пересекающиеся\n(расстояние между центрами ~50-60 пикселей)', 
+              fontsize=14, fontweight='bold')
+    plt.axis('off')
+    
+    # Расчет расстояний и перекрытий
+    dist12 = np.sqrt((center2_x - center1_x)**2 + (center2_y - center1_y)**2)
+    dist13 = np.sqrt((center3_x - center1_x)**2 + (center3_y - center1_y)**2)
+    dist23 = np.sqrt((center3_x - center2_x)**2 + (center3_y - center2_y)**2)
+    
+    overlap12 = 2 * radius - dist12
+    overlap13 = 2 * radius - dist13
+    overlap23 = 2 * radius - dist23
+    
+    plt.text(10, 370, f'Расстояние 1-2: {dist12:.1f} пикселей', 
+             fontsize=12, color='red', weight='bold', backgroundcolor='white')
+    plt.text(10, 385, f'Расстояние 1-3: {dist13:.1f} пикселей', 
+             fontsize=12, color='red', weight='bold', backgroundcolor='white')
+    plt.text(10, 400, f'Расстояние 2-3: {dist23:.1f} пикселей', 
+             fontsize=12, color='red', weight='bold', backgroundcolor='white')
+    plt.text(250, 385, f'Перекрытие: ~{overlap12:.1f} пикселей', 
+             fontsize=12, color='blue', weight='bold', backgroundcolor='white')
+    
+    plt.savefig('three_highly_overlapping_pores_preview.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    return image
+
+def create_four_slightly_overlapping_pores():
+    """Создает изображение с четырьмя порами, немного пересекающимися"""
+    print("Создаю изображение с четырьмя немного пересекающимися порами...")
+    
+    image = np.zeros((400, 400), dtype=np.uint8)
+    
+    radius = 45
+    
+    # Центры расположены в вершинах квадрата с небольшим перекрытием
+    center1_y, center1_x = 160, 160    # Верхний-левый
+    center2_y, center2_x = 160, 240    # Верхний-правый
+    center3_y, center3_x = 240, 160    # Нижний-левый
+    center4_y, center4_x = 240, 240    # Нижний-правый
+    
+    rr, cc = draw.disk((center1_y, center1_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    rr, cc = draw.disk((center2_y, center2_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    rr, cc = draw.disk((center3_y, center3_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    rr, cc = draw.disk((center4_y, center4_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    io.imsave('four_slightly_overlapping_pores.png', image)
+    print("✓ Создано изображение: 'four_slightly_overlapping_pores.png'")
+    
+    # Визуализация
+    plt.figure(figsize=(10, 8))
+    plt.imshow(image, cmap='gray')
+    plt.title('Четыре поры, немного пересекающиеся\n(расстояние между центрами = 80 пикселей)', 
+              fontsize=14, fontweight='bold')
+    plt.axis('off')
+    
+    # Расчет расстояний
+    dist_horizontal = np.sqrt((center2_x - center1_x)**2 + (center2_y - center1_y)**2)
+    dist_vertical = np.sqrt((center3_x - center1_x)**2 + (center3_y - center1_y)**2)
+    dist_diagonal = np.sqrt((center4_x - center1_x)**2 + (center4_y - center1_y)**2)
+    
+    overlap_horizontal = 2 * radius - dist_horizontal
+    
+    plt.text(10, 370, f'Расстояние по горизонтали: {dist_horizontal:.1f} пикселей', 
+             fontsize=12, color='red', weight='bold', backgroundcolor='white')
+    plt.text(10, 385, f'Расстояние по вертикали: {dist_vertical:.1f} пикселей', 
+             fontsize=12, color='red', weight='bold', backgroundcolor='white')
+    plt.text(10, 400, f'Расстояние по диагонали: {dist_diagonal:.1f} пикселей', 
+             fontsize=12, color='red', weight='bold', backgroundcolor='white')
+    plt.text(250, 385, f'Перекрытие: ~{overlap_horizontal:.1f} пикселей', 
+             fontsize=12, color='blue', weight='bold', backgroundcolor='white')
+    
+    plt.savefig('four_slightly_overlapping_pores_preview.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    return image
+
+def create_four_highly_overlapping_pores():
+    """Создает изображение с четырьмя порами, сильно пересекающимися"""
+    print("Создаю изображение с четырьмя сильно пересекающимися порами...")
+    
+    image = np.zeros((400, 400), dtype=np.uint8)
+    
+    radius = 60
+    
+    # Центры расположены очень близко для сильного перекрытия
+    center1_y, center1_x = 180, 180    # Верхний-левый
+    center2_y, center2_x = 180, 220    # Верхний-правый
+    center3_y, center3_x = 220, 180    # Нижний-левый
+    center4_y, center4_x = 220, 220    # Нижний-правый
+    
+    rr, cc = draw.disk((center1_y, center1_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    rr, cc = draw.disk((center2_y, center2_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    rr, cc = draw.disk((center3_y, center3_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    rr, cc = draw.disk((center4_y, center4_x), radius, shape=image.shape)
+    image[rr, cc] = 255
+    
+    io.imsave('four_highly_overlapping_pores.png', image)
+    print("✓ Создано изображение: 'four_highly_overlapping_pores.png'")
+    
+    # Визуализация
+    plt.figure(figsize=(10, 8))
+    plt.imshow(image, cmap='gray')
+    plt.title('Четыре поры, сильно пересекающиеся\n(расстояние между центрами = 40 пикселей)', 
+              fontsize=14, fontweight='bold')
+    plt.axis('off')
+    
+    # Расчет расстояний и перекрытий
+    dist_horizontal = np.sqrt((center2_x - center1_x)**2 + (center2_y - center1_y)**2)
+    dist_vertical = np.sqrt((center3_x - center1_x)**2 + (center3_y - center1_y)**2)
+    
+    overlap_horizontal = 2 * radius - dist_horizontal
+    overlap_vertical = 2 * radius - dist_vertical
+    
+    plt.text(10, 370, f'Расстояние по горизонтали: {dist_horizontal:.1f} пикселей', 
+             fontsize=12, color='red', weight='bold', backgroundcolor='white')
+    plt.text(10, 385, f'Расстояние по вертикали: {dist_vertical:.1f} пикселей', 
+             fontsize=12, color='red', weight='bold', backgroundcolor='white')
+    plt.text(10, 400, f'Перекрытие по горизонтали: {overlap_horizontal:.1f} пикселей', 
+             fontsize=12, color='blue', weight='bold', backgroundcolor='white')
+    plt.text(250, 400, f'Перекрытие по вертикали: {overlap_vertical:.1f} пикселей', 
+             fontsize=12, color='blue', weight='bold', backgroundcolor='white')
+    
+    plt.savefig('four_highly_overlapping_pores_preview.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    return image
+
 def analyze_created_masks():
     """Анализирует созданные изображения и выводит информацию"""
     from skimage import measure
     
-    masks = ['touching_pores.png', 'slightly_overlapping_pores.png', 
-             'highly_overlapping_pores.png', 'single_pore.png']
+    masks = [
+        'single_pore.png', 
+        'touching_pores.png', 
+        'slightly_overlapping_pores.png', 
+        'highly_overlapping_pores.png',
+        'three_touching_pores.png',
+        'three_slightly_overlapping_pores.png',
+        'three_highly_overlapping_pores.png',
+        'four_slightly_overlapping_pores.png',
+        'four_highly_overlapping_pores.png'
+    ]
     
     print("\n" + "="*60)
     print("АНАЛИЗ СОЗДАННЫХ ИЗОБРАЖЕНИЙ")
@@ -215,6 +502,13 @@ def main():
         create_slightly_overlapping_pores()
         create_highly_overlapping_pores()
         
+        # Новые изображения
+        create_three_touching_pores()
+        create_three_slightly_overlapping_pores()
+        create_three_highly_overlapping_pores()
+        create_four_slightly_overlapping_pores()
+        create_four_highly_overlapping_pores()
+        
         # Анализируем созданные изображения
         analyze_created_masks()
         
@@ -226,10 +520,17 @@ def main():
         print("   • touching_pores.png           - две касающиеся поры")
         print("   • slightly_overlapping_pores.png - две немного пересекающиеся поры")
         print("   • highly_overlapping_pores.png - две сильно пересекающиеся поры")
+        print("   • three_touching_pores.png     - три касающиеся поры")
+        print("   • three_slightly_overlapping_pores.png - три немного пересекающиеся поры")
+        print("   • three_highly_overlapping_pores.png - три сильно пересекающиеся поры")
+        print("   • four_slightly_overlapping_pores.png - четыре немного пересекающиеся поры")
+        print("   • four_highly_overlapping_pores.png - четыре сильно пересекающиеся поры")
+        
         print("\n   • *_preview.png               - превью с параметрами")
         
         print("\n🎯 ДАЛЬНЕЙШИЕ ДЕЙСТВИЯ:")
         print("   Теперь запустите: python circle_approximator.py")
+        print("   для тестирования алгоритма аппроксимации на этих изображениях")
         print("=" * 70)
         
     except Exception as e:
