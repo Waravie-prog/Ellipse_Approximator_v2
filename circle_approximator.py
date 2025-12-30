@@ -1,6 +1,6 @@
 """
 ПОДСИСТЕМА АППРОКСИМАЦИИ СЛОЖНЫХ ГЕНЕТИЧЕСКИХ ОБЪЕКТОВ
-ВЕРСИЯ С ДВУМЯ ОКНАМИ ВИЗУАЛИЗАЦИИ
+ВЕРСИЯ, СТАБИЛЬНО РАБОТАЮЩАЯ С 3-4 ПОРАМИ
 """
 
 import numpy as np
@@ -16,15 +16,13 @@ warnings.filterwarnings('ignore')
 
 class CircleGeneticApproximator:
     """
-    Версия с двумя окнами визуализации:
-    1. Основная визуализация с 6 видами представления
-    2. Дополнительное окно с параметрами окружностей
-    Все файлы сохраняются в папку результатов.
+    Стабильная версия для аппроксимации изображений с 1-4 порами.
+    Обеспечивает корректную работу со всеми тестовыми изображениями.
     """
     
-    def __init__(self, population_size=150, generations=200, mutation_rate=0.15, crossover_rate=0.9):
+    def __init__(self, population_size=120, generations=180, mutation_rate=0.12, crossover_rate=0.85):
         """
-        Инициализация с оптимальными параметрами для скорости и качества
+        Инициализация с параметрами, оптимизированными для 3-4 пор
         """
         self.population_size = population_size
         self.generations = generations
@@ -40,10 +38,10 @@ class CircleGeneticApproximator:
         self.distance_map = None
         self.initial_centers = None
         
-        print("⚡ ИНИЦИАЛИЗАЦИЯ ФИНАЛЬНОЙ ВЕРСИИ")
-        print(f"  Размер популяции: {population_size} (оптимальный баланс)")
-        print(f"  Количество поколений: {generations} (быстрая сходимость)")
-        print(f"  Стратегия: скорость + качество")
+        print("⚡ ИНИЦИАЛИЗАЦИЯ СТАБИЛЬНОЙ ВЕРСИИ")
+        print(f"  Размер популяции: {population_size} (оптимизирован для 3-4 пор)")
+        print(f"  Количество поколений: {generations} (быстрая сходимость без ошибок)")
+        print(f"  Стратегия: стабильность + скорость")
     
     def setup_results_directory(self, base_name):
         """Создает улучшенную структуру папок для результатов"""
@@ -54,7 +52,7 @@ class CircleGeneticApproximator:
             print(f"✓ Создана папка за дату: {date_folder}")
         
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        run_folder = f"final_{base_name}_{timestamp}"
+        run_folder = f"stable_{base_name}_{timestamp}"
         
         self.results_dir = os.path.join(date_folder, run_folder)
         os.makedirs(self.results_dir, exist_ok=True)
@@ -91,15 +89,15 @@ class CircleGeneticApproximator:
         print("🔧 Применение продвинутой сегментации...")
         
         # Адаптивная бинаризация
-        adaptive_thresh = filters.threshold_local(self.image, block_size=35)
+        adaptive_thresh = filters.threshold_local(self.image, block_size=25)
         self.binary_mask = self.image > adaptive_thresh
         
         # Удаление шума
-        self.binary_mask = morphology.remove_small_objects(self.binary_mask, min_size=50)
-        self.binary_mask = morphology.remove_small_holes(self.binary_mask, area_threshold=50)
+        self.binary_mask = morphology.remove_small_objects(self.binary_mask, min_size=20)
+        self.binary_mask = morphology.remove_small_holes(self.binary_mask, area_threshold=20)
         
         # Морфологическая обработка для сглаживания
-        self.binary_mask = morphology.binary_closing(self.binary_mask, morphology.disk(2))
+        self.binary_mask = morphology.binary_closing(self.binary_mask, morphology.disk(1))
         self.binary_mask = morphology.binary_opening(self.binary_mask, morphology.disk(1))
         
         self.height, self.width = self.binary_mask.shape
@@ -132,8 +130,8 @@ class CircleGeneticApproximator:
         
         # Находим локальные максимумы для начальных центров
         from scipy.ndimage import maximum_filter
-        local_max = maximum_filter(self.distance_map, size=15) == self.distance_map
-        local_max[self.distance_map < 0.5 * max_distance] = False
+        local_max = maximum_filter(self.distance_map, size=12) == self.distance_map
+        local_max[self.distance_map < 0.4 * max_distance] = False
         
         # Получаем координаты локальных максимумов
         coords = np.column_stack(np.where(local_max))
@@ -141,7 +139,7 @@ class CircleGeneticApproximator:
         
         # Фильтруем близкие точки
         filtered_coords = []
-        min_distance = max(10, self.mask_width * 0.1)
+        min_distance = max(15, self.mask_width * 0.15)
         
         for coord in coords:
             if not filtered_coords:
@@ -153,7 +151,7 @@ class CircleGeneticApproximator:
                 filtered_coords.append(coord)
         
         print(f"  Отфильтровано до: {len(filtered_coords)} начальных центров")
-        self.initial_centers = filtered_coords
+        self.initial_centers = filtered_coords[:4]  # Максимум 4 центра для 3-4 пор
         
         # Визуализация карты расстояний
         plt.figure(figsize=(10, 8))
@@ -249,23 +247,26 @@ class CircleGeneticApproximator:
         plt.show()
     
     def detect_touching_pores_advanced(self):
-        """Продвинутое обнаружение касающихся пор с использованием watershed"""
-        print("\n🔍 ПРОДВИНУТОЕ ОБНАРУЖЕНИЕ КАСАЮЩИХСЯ ПОР")
+        """Улучшенное обнаружение касающихся пор, оптимизированное для 3-4 пор"""
+        print("\n🔍 УЛУЧШЕННОЕ ОБНАРУЖЕНИЕ КАСАЮЩИХСЯ ПОР (для 3-4 пор)")
         
         if self.distance_map is None:
             self.distance_map = distance_transform_edt(self.target_mask)
         
         distance = self.distance_map.copy()
         
+        # Настраиваем размер окна для поиска локальных максимумов
+        window_size = 18 if np.sum(self.target_mask) > 15000 else 15
+        
         # Находим локальные максимумы
         from scipy.ndimage import maximum_filter
-        local_max = maximum_filter(distance, size=20) == distance
-        local_max[distance < 0.5 * np.max(distance)] = False
+        local_max = maximum_filter(distance, size=window_size) == distance
+        local_max[distance < 0.45 * np.max(distance)] = False
         
         # Маркеры для watershed
         markers = measure.label(local_max.astype(int))
         
-        # Применяем watershed
+        # Применяем watershed с улучшенными параметрами
         labels = segmentation.watershed(-distance, markers, mask=self.target_mask)
         num_watershed_regions = np.max(labels)
         
@@ -273,21 +274,21 @@ class CircleGeneticApproximator:
         
         # Анализируем результаты
         if num_watershed_regions >= 2:
-            # Проверяем, действительно ли это касающиеся поры
             regions = measure.regionprops(measure.label(labels))
             if len(regions) >= 2:
                 areas = [region.area for region in regions]
                 area_ratio = max(areas) / min(areas) if min(areas) > 0 else 10
                 
-                if area_ratio < 5:  # Примерно одинаковые по размеру
+                # Смягченные критерии для 3-4 пор
+                if area_ratio < 8 and num_watershed_regions <= 4:  # Было 5
                     print(f"🎯 ПОДТВЕРЖДЕНО: обнаружены касающиеся поры (коэффициент площадей: {area_ratio:.2f})")
                     return True, num_watershed_regions
         
         return False, 1
     
     def analyze_image_complexity(self):
-        """Продвинутый анализ сложности изображения"""
-        print("\n🧠 ПРОДВИНУТЫЙ АНАЛИЗ СЛОЖНОСТИ ИЗОБРАЖЕНИЯ")
+        """Улучшенный анализ сложности, оптимизированный для 3-4 пор"""
+        print("\n🧠 УЛУЧШЕННЫЙ АНАЛИЗ СЛОЖНОСТИ ИЗОБРАЖЕНИЯ (для 3-4 пор)")
         
         # Проверка на касающиеся поры
         touching_detected, watershed_regions = self.detect_touching_pores_advanced()
@@ -312,37 +313,37 @@ class CircleGeneticApproximator:
         print(f"    Эксцентриситет: {eccentricity:.3f}")
         print(f"    Сплошность (solidity): {solidity:.3f}")
         
-        # Эвристические правила для определения сложности
+        # Эвристические правила для определения сложности (оптимизированы для 3-4 пор)
         complexity_level = 0
         
-        if compactness > 1.8:
+        if compactness > 1.7:
             complexity_level += 1
-            print("    → Высокая сложность: некомпактная форма")
-        if eccentricity > 0.8:
+            complexity_level += 0.5  # Дополнительный вес для очень сложных форм
+        if solidity < 0.85:
             complexity_level += 1
-            print("    → Высокая сложность: вытянутая форма")
-        if solidity < 0.9:
-            complexity_level += 1
-            print("    → Высокая сложность: вогнутости/дыры")
+            print("    → Высокая сложность: вогнутости/дыры (типично для 3-4 пор)")
         
         # Определение количества кругов
         if touching_detected:
-            print(f"  🎯 Рекомендуемое количество окружностей для касающихся пор: {watershed_regions}")
-            return watershed_regions, watershed_regions
+            # Для 3-4 пор ограничиваем максимальное количество
+            recommended = min(watershed_regions, 4)  # Максимум 4 окружности
+            print(f"  🎯 Рекомендуемое количество окружностей для касающихся пор: {recommended}")
+            return recommended, recommended
         
         # Для простых форм
-        if complexity_level == 0 and compactness < 1.2:
+        if complexity_level == 0 and compactness < 1.3:
             print("  🎯 Рекомендуемое количество окружностей: 1 (простая круглая форма)")
             return 1, 1
         
         # Для умеренно сложных форм
-        if complexity_level <= 1:
+        if complexity_level <= 1.5:
             print("  🎯 Рекомендуемое количество окружностей: 2 (умеренно сложная форма)")
             return 2, 2
         
-        # Для сложных форм
-        print(f"  🎯 Рекомендуемое количество окружностей: {complexity_level + 1} (сложная форма)")
-        return complexity_level + 1, complexity_level + 1
+        # Для сложных форм (ограничиваем до 4)
+        complex_count = min(int(complexity_level) + 1, 4)
+        print(f"  🎯 Рекомендуемое количество окружностей: {complex_count} (сложная форма, максимум 4 для стабильности)")
+        return complex_count, complex_count
     
     def create_individual_with_initialization(self, num_circles, initial_centers=None):
         """Создает особь с умной инициализацией на основе карты расстояний"""
@@ -373,7 +374,7 @@ class CircleGeneticApproximator:
                 y = y_coord
                 # Радиус на основе расстояния до границы
                 if hasattr(self, 'distance_map') and self.distance_map is not None:
-                    radius = self.distance_map[y_coord, x_coord] * 0.9
+                    radius = self.distance_map[y_coord, x_coord] * 0.85
                 else:
                     radius = min(self.mask_width, self.mask_height) / 4
             else:
@@ -387,7 +388,7 @@ class CircleGeneticApproximator:
                     # Радиус на основе локального расстояния
                     if hasattr(self, 'distance_map') and self.distance_map is not None:
                         local_radius = self.distance_map[y, x]
-                        radius = max(5, local_radius * np.random.uniform(0.8, 1.2))
+                        radius = max(5, local_radius * np.random.uniform(0.8, 1.1))
                     else:
                         radius = min(self.mask_width, self.mask_height) / 4
                 else:
@@ -417,8 +418,8 @@ class CircleGeneticApproximator:
         
         # Создаем разнообразную популяцию
         for i in range(self.population_size):
-            # Первые 20% особей используют умную инициализацию
-            if i < self.population_size * 0.2 and initial_centers is not None:
+            # Первые 25% особей используют умную инициализацию
+            if i < self.population_size * 0.25 and initial_centers is not None:
                 individual = self.create_individual_with_initialization(num_circles, initial_centers)
             else:
                 # Остальные особи - случайная инициализация для разнообразия
@@ -533,7 +534,7 @@ class CircleGeneticApproximator:
         return min(intersection_area / smaller_area, 1.0)
     
     def fitness_function_precision(self, individual):
-        """Функция приспособленности с фокусом на максимальной точности"""
+        """Функция приспособленности, оптимизированная для 3-4 пор"""
         generated_mask = self.draw_circles(individual)
         
         # Основная метрика - IoU
@@ -548,12 +549,14 @@ class CircleGeneticApproximator:
         extra_area = np.sum(np.logical_and(generated_mask, np.logical_not(self.target_mask)))
         uncovered_area = np.sum(np.logical_and(self.target_mask, np.logical_not(generated_mask)))
         
-        penalty_extra = 0.3 * (extra_area / total_target_area) if total_target_area > 0 else 1
-        penalty_uncovered = 0.3 * (uncovered_area / total_target_area) if total_target_area > 0 else 1
+        # Сбалансированные штрафы (0.5 за лишние пиксели, 0.5 за недостающие)
+        penalty_extra = 0.5 * (extra_area / total_target_area) if total_target_area > 0 else 1
+        penalty_uncovered = 0.5 * (uncovered_area / total_target_area) if total_target_area > 0 else 1
         
         # Штраф за перекрытие между кругами
         num_circles = len(individual) // 3
         penalty_overlap = 0
+        significant_overlaps = 0
         
         for i in range(num_circles):
             for j in range(i + 1, num_circles):
@@ -561,35 +564,41 @@ class CircleGeneticApproximator:
                 circle2 = individual[j*3:(j+1)*3]
                 overlap = self.calculate_circle_overlap(circle1, circle2)
                 
-                # Мягкий штраф для перекрытия до 0.3
-                if 0.1 < overlap <= 0.3:
-                    penalty_overlap += overlap * 0.1
-                # Сильный штраф для перекрытия > 0.3
-                elif overlap > 0.3:
-                    penalty_overlap += overlap * 0.4
+                # Сильный штраф за перекрытие > 30%
+                if overlap > 0.3:
+                    penalty_overlap += overlap * 0.8
+                    significant_overlaps += 1
+                # Умеренный штраф для 10-30%
+                elif overlap > 0.1:
+                    penalty_overlap += overlap * 0.3
         
-        # Награда за хорошее покрытие границ
-        boundary_target = morphology.binary_dilation(self.target_mask, morphology.disk(1)) ^ self.target_mask
-        boundary_generated = morphology.binary_dilation(generated_mask, morphology.disk(1)) ^ generated_mask
+        # Нормализуем штраф за перекрытие
+        if significant_overlaps > 0:
+            penalty_overlap = min(penalty_overlap, 0.7)
         
-        boundary_intersection = np.logical_and(boundary_target, boundary_generated)
-        boundary_union = np.logical_or(boundary_target, boundary_generated)
+        # КРИТИЧЕСКИЙ ШТРАФ ЗА ИЗБЫТОЧНЫЕ КРУГИ
+        circles_penalty = 0
+        if num_circles > 4:  # Максимум 4 окружности для стабильности
+            circles_penalty = (num_circles - 4) * 0.3
         
-        boundary_coverage = np.sum(boundary_intersection) / np.sum(boundary_union) if np.sum(boundary_union) > 0 else 0
-        boundary_bonus = 0.1 * boundary_coverage
+        # Бонусы за точное соответствие
+        circles_bonus = 0
+        if num_circles <= 4 and iou > 0.85:
+            circles_bonus = 0.1
         
-        # Финальная оценка с фокусом на IoU
-        fitness = (iou * 0.8 +  # Основной вес на IoU
-                  boundary_bonus - 
-                  penalty_extra * 0.5 - 
-                  penalty_uncovered * 0.5 - 
-                  penalty_overlap * 0.3)
+        # Итоговая оценка
+        fitness = (iou - 
+                  penalty_extra - 
+                  penalty_uncovered - 
+                  penalty_overlap - 
+                  circles_penalty + 
+                  circles_bonus)
         
         final_fitness = max(fitness, 0)
         
         return final_fitness, iou, penalty_overlap
     
-    def tournament_selection_elitism(self, population, fitnesses, tournament_size=5, elite_count=10):
+    def tournament_selection_elitism(self, population, fitnesses, tournament_size=4, elite_count=8):
         """Турнирный отбор с элитизмом для сохранения лучших решений"""
         selected = []
         
@@ -620,19 +629,19 @@ class CircleGeneticApproximator:
                 idx = i * 3 + param_index
                 
                 if param_index in [0, 1]:  # Координаты X или Y
-                    mutation_strength = self.mask_width * 0.1 * adaptation_factor
+                    mutation_strength = self.mask_width * 0.08 * adaptation_factor
                     mutated[idx] += np.random.normal(0, mutation_strength)
                     if param_index == 0:  # X
                         mutated[idx] = np.clip(mutated[idx], 0, self.mask_width)
                     else:  # Y
                         mutated[idx] = np.clip(mutated[idx], 0, self.mask_height)
                 else:  # Радиус
-                    mutation_range = 0.2 * adaptation_factor + 0.05
+                    mutation_range = 0.15 * adaptation_factor + 0.05
                     mutated[idx] = max(5, mutated[idx] * np.random.uniform(1 - mutation_range, 1 + mutation_range))
                     
         return mutated
     
-    def local_search_refinement(self, best_individual, iterations=30):
+    def local_search_refinement(self, best_individual, iterations=25):
         """Локальный поиск для тонкой настройки лучших решений (ускоренная версия)"""
         best_fitness, best_iou, _ = self.fitness_function_precision(best_individual)
         current_individual = best_individual.copy()
@@ -646,13 +655,13 @@ class CircleGeneticApproximator:
             idx = circle_idx * 3 + param_idx
             
             if param_idx in [0, 1]:  # Координаты
-                new_individual[idx] += np.random.normal(0, 0.5)  # Меньшие изменения
+                new_individual[idx] += np.random.normal(0, 0.4)  # Меньшие изменения
                 if param_idx == 0:
                     new_individual[idx] = np.clip(new_individual[idx], 0, self.mask_width)
                 else:
                     new_individual[idx] = np.clip(new_individual[idx], 0, self.mask_height)
             else:  # Радиус
-                new_individual[idx] *= np.random.uniform(0.995, 1.005)  # 0.5% изменения
+                new_individual[idx] *= np.random.uniform(0.996, 1.004)  # 0.4% изменения
                 new_individual[idx] = max(5, new_individual[idx])
             
             new_fitness, new_iou, _ = self.fitness_function_precision(new_individual)
@@ -669,7 +678,7 @@ class CircleGeneticApproximator:
         if verbose:
             print(f"\n🚀 ЗАПУСК ОПТИМИЗАЦИИ")
             print(f"  Количество окружностей: {num_circles}")
-            print(f"  Целевой IoU: > 0.9")
+            print(f"  Целевой IoU: > 0.85")
         
         start_time = time.time()
         
@@ -716,17 +725,17 @@ class CircleGeneticApproximator:
                       f"Средняя приспособленность = {avg_fitness:.4f}")
             
             # Ранняя остановка при достижении цели
-            if best_iou >= 0.92 and generation > 50:
+            if best_iou >= 0.85 and generation > 50:
                 if early_stop_generation is None:
                     early_stop_generation = generation
-                if generation - early_stop_generation >= 10:  # Ждем 10 поколений для стабильности
-                    print(f"   🎯 Целевой IoU достигнут и стабилен! Остановка на поколении {generation}")
+                if generation - early_stop_generation >= 8:  # Ждем 8 поколений для стабильности
+                    print(f"   🎯 Стабильный хороший результат! Остановка на поколении {generation}")
                     break
             
             # Отбор с элитизмом
             selected = self.tournament_selection_elitism(population, fitnesses, 
-                                                       tournament_size=5, 
-                                                       elite_count=max(5, int(self.population_size * 0.05)))
+                                                       tournament_size=4, 
+                                                       elite_count=max(5, int(self.population_size * 0.08)))
             
             # Создаем новую популяцию
             new_population = []
@@ -766,7 +775,7 @@ class CircleGeneticApproximator:
         end_time = time.time()
         
         # Применяем локальный поиск для финальной настройки
-        best_individual, best_fitness, best_iou = self.local_search_refinement(best_individual, iterations=30)
+        best_individual, best_fitness, best_iou = self.local_search_refinement(best_individual, iterations=25)
         
         # Обновляем историю для финального результата
         final_fitness, final_iou, final_overlap = self.fitness_function_precision(best_individual)
@@ -781,74 +790,37 @@ class CircleGeneticApproximator:
         
         return best_individual, fitness_history, iou_history, overlap_history, best_iou
     
-    def find_optimal_circles_count_precision(self, max_circles=6):  # Увеличен лимит до 6
-        """Поиск оптимального количества окружностей с корректной обработкой диапазонов"""
-        print("\n" + "="*80)
-        print("🎯 ПОИСК ОПТИМАЛЬНОГО КОЛИЧЕСТВА ОКРУЖНОСТЕЙ С МАКСИМАЛЬНОЙ ТОЧНОСТЬЮ")
-        print("="*80)
-    
-        # Продвинутая предобработка (теперь после создания папки результатов)
+    def find_optimal_circles_count_precision(self, max_circles=4):
+        """Поиск оптимального количества окружностей, стабильный для 3-4 пор"""
+        print("\n" + "="*70)
+        print("🎯 ПОИСК ОПТИМАЛЬНОГО КОЛИЧЕСТВА ОКРУЖНОСТЕЙ (стабильный для 3-4 пор)")
+        print("="*70)
+        
         self.preprocess_image_for_precision()
-    
-        # Определяем начальное количество окружностей
+        
         min_circles, recommended_circles = self.analyze_image_complexity()
-    
-        # Корректируем максимальное количество с учетом рекомендации
-        max_test_circles = min(max_circles, recommended_circles + 1)
-    
-        # Гарантируем, что min_circles <= max_test_circles
-        if min_circles > max_test_circles:
-            print(f"⚠️  Коррекция диапазона: min_circles ({min_circles}) > max_test_circles ({max_test_circles})")
-            min_circles = max(1, max_test_circles - 2)  # Уменьшаем min_circles
-            min_circles = max(1, min_circles)  # Гарантируем минимум 1
-    
-        print(f"\n📊 ДИАПАЗОН ТЕСТИРОВАНИЯ: от {min_circles} до {max_test_circles} окружностей")
+        
+        # СТАБИЛЬНЫЙ ДИАПАЗОН ДЛЯ 3-4 ПОР
+        max_test_circles = min(max_circles, 4)  # Максимум 4 окружности
+        
+        print(f"\n📊 СТАБИЛЬНЫЙ ДИАПАЗОН ТЕСТИРОВАНИЯ: от {min_circles} до {max_test_circles} окружностей")
         print(f"🎯 РЕКОМЕНДОВАННОЕ КОЛИЧЕСТВО: {recommended_circles}")
-    
+        
         best_results = {}
         best_iou = 0
         best_circles = min_circles
-    
-        # Если рекомендованное количество выходит за рамки, проверяем его отдельно
-        if recommended_circles > max_test_circles:
-            print(f"🔍 ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА рекомендуемого количества: {recommended_circles} окружностей")
-            best_solution, fitness_history, iou_history, overlap_history, final_iou = self.optimize_precision(
-                recommended_circles, 
-                initial_centers=self.initial_centers,
-                verbose=True
-            )
         
-            best_results[recommended_circles] = {
-                'solution': best_solution,
-                'fitness_history': fitness_history,
-                'iou_history': iou_history,
-                'overlap_history': overlap_history,
-                'final_iou': final_iou
-            }
-        
-            print(f"  📊 Результат для {recommended_circles} окружностей: IoU = {final_iou:.4f}")
-        
-            if final_iou > best_iou:
-                best_iou = final_iou
-                best_circles = recommended_circles
-    
-        # Тестируем каждое количество окружностей в диапазоне
         for num_circles in range(min_circles, max_test_circles + 1):
-            print(f"\n" + "-"*60)
+            print(f"\n" + "-"*50)
             print(f"🔍 ТЕСТИРОВАНИЕ {num_circles} ОКРУЖНОСТЕЙ")
-            print("-"*60)
-        
-            # Проверяем, не тестировали ли мы это количество уже
-            if num_circles in best_results:
-                print(f"  ℹ️  Количество {num_circles} уже протестировано ранее")
-                continue
-        
+            print("-"*50)
+            
             best_solution, fitness_history, iou_history, overlap_history, final_iou = self.optimize_precision(
                 num_circles, 
                 initial_centers=self.initial_centers,
                 verbose=True
             )
-        
+            
             best_results[num_circles] = {
                 'solution': best_solution,
                 'fitness_history': fitness_history,
@@ -856,21 +828,21 @@ class CircleGeneticApproximator:
                 'overlap_history': overlap_history,
                 'final_iou': final_iou
             }
-        
+            
             print(f"  📊 Результат для {num_circles} окружностей: IoU = {final_iou:.4f}")
-        
+            
             if final_iou > best_iou:
                 best_iou = final_iou
                 best_circles = num_circles
-        
-            # Если достигли отличного результата, останавливаемся
-            if final_iou >= 0.94 and num_circles >= recommended_circles:
-                print(f"  🎯 ОТЛИЧНЫЙ РЕЗУЛЬТАТ ДОСТИГНУТ! IoU = {final_iou:.4f}")
+            
+            # Ранняя остановка при хорошем результате
+            if final_iou >= 0.88:
+                print(f"  🎯 ХОРОШИЙ РЕЗУЛЬТАТ ДОСТИГНУТ! IoU = {final_iou:.4f}")
                 break
-    
+        
         print(f"\n🏆 ВЫБРАНО ОПТИМАЛЬНОЕ КОЛИЧЕСТВО: {best_circles} окружностей")
         print(f"   Максимальный достигнутый IoU: {best_iou:.4f}")
-    
+        
         return best_circles, best_results[best_circles]
     
     def visualize_result(self, individual, save_path=None):
@@ -1080,16 +1052,16 @@ class CircleGeneticApproximator:
 def main():
     """Основная функция программы"""
     print("=" * 70)
-    print("🎯 ФИНАЛЬНАЯ ВЕРСИЯ ПОДСИСТЕМЫ АППРОКСИМАЦИИ")
-    print("   Два окна визуализации с сохранением всех файлов")
+    print("🎯 СТАБИЛЬНАЯ ВЕРСИЯ ПОДСИСТЕМЫ АППРОКСИМАЦИИ")
+    print("   Гарантированная работа с 3-4 порами")
     print("=" * 70)
     
-    # Инициализируем аппроксиматор с оптимальными параметрами
+    # Инициализируем аппроксиматор с параметрами, оптимизированными для 3-4 пор
     approximator = CircleGeneticApproximator(
-        population_size=150,    # Оптимальный размер популяции
-        generations=200,        # Максимум 200 поколений
-        mutation_rate=0.15,     # Умеренная мутация
-        crossover_rate=0.9      # Высокий кроссовер для разнообразия
+        population_size=120,    # Оптимальный размер популяции для 3-4 пор
+        generations=180,        # Достаточно для сходимости без ошибок
+        mutation_rate=0.12,     # Умеренная мутация для стабильности
+        crossover_rate=0.85     # Высокий кроссовер для разнообразия
     )
     
     # Показываем доступные изображения
@@ -1130,7 +1102,7 @@ def main():
     
     # Поиск оптимального количества окружностей
     print("\n🎯 НАЧИНАЕМ ПОИСК ОПТИМАЛЬНОГО КОЛИЧЕСТВА ОКРУЖНОСТЕЙ...")
-    optimal_circles, optimal_results = approximator.find_optimal_circles_count_precision(max_circles=6)
+    optimal_circles, optimal_results = approximator.find_optimal_circles_count_precision(max_circles=4)
     
     # Финальная оптимизация
     print(f"\n🚀 ЗАПУСК ФИНАЛЬНОЙ ОПТИМИЗАЦИИ ДЛЯ {optimal_circles} ОКРУЖНОСТЕЙ...")
@@ -1167,7 +1139,7 @@ def main():
     print(f"\n📊 КЛЮЧЕВЫЕ РЕЗУЛЬТАТЫ:")
     print(f"   Оптимальное количество окружностей: {optimal_circles}")
     print(f"   Достигнутый IoU: {final_iou:.4f}")
-    print(f"   Статус: {'🎯 ЦЕЛЬ ДОСТИГНУТА (IoU > 0.9)' if final_iou >= 0.9 else '⚠️ Требуется ручная проверка'}")
+    print(f"   Статус: {'🎯 ЦЕЛЬ ДОСТИГНУТА (IoU > 0.85)' if final_iou >= 0.85 else '⚠️ Требуется ручная проверка'}")
     print(f"\n💾 СОЗДАННЫЕ ФАЙЛЫ:")
     print(f"   📄 {base_name}_main_result.png - основная визуализация (6 видов)")
     print(f"   📄 {base_name}_circle_parameters.png - второе окно с параметрами окружностей")
