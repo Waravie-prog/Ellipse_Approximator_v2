@@ -386,6 +386,12 @@ class CircleGeneticApproximator:
     
     def draw_circles(self, individual, shape=None):
         """Отрисовывает круги на маске"""
+        # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверка на None
+        if individual is None:
+            if shape is None:
+                shape = (self.mask_height, self.mask_width)
+            return np.zeros(shape, dtype=bool)
+        
         if shape is None:
             shape = (self.mask_height, self.mask_width)
         
@@ -506,6 +512,10 @@ class CircleGeneticApproximator:
     
     def fitness_function_precision(self, individual):
         """Функция приспособленности, оптимизированная для 1-4 пор"""
+        # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверка на None
+        if individual is None:
+            return 0, 0, 0
+        
         generated_mask = self.draw_circles(individual)
         
         # Основные метрики
@@ -634,6 +644,10 @@ class CircleGeneticApproximator:
     
     def local_search_refinement(self, best_individual, iterations=30):
         """Локальный поиск для тонкой настройки лучших решений (ускоренная версия)"""
+        # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверка на None
+        if best_individual is None:
+            return None, 0, 0
+        
         best_fitness, best_iou, _ = self.fitness_function_precision(best_individual)
         current_individual = best_individual.copy()
         
@@ -743,7 +757,9 @@ class CircleGeneticApproximator:
         end_time = time.time()
         
         # Применяем локальный поиск для финальной настройки
-        best_individual, best_fitness, best_iou = self.local_search_refinement(best_individual, iterations=30)
+        # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверка на None
+        if best_individual is not None:
+            best_individual, best_fitness, best_iou = self.local_search_refinement(best_individual, iterations=30)
         
         if verbose:
             print(f"\n✅ ОПТИМИЗАЦИЯ ЗАВЕРШЕНА ЧЕРЕЗ {end_time - start_time:.2f} СЕКУНД")
