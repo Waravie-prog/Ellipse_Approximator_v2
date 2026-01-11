@@ -1,0 +1,34 @@
+{
+  "image_info": {
+    "width": 400,
+    "height": 400,
+    "original_area": 20069,
+    "processing_time": "2026-01-10 14:46:32"
+  },
+  "approximation_metrics": {
+    "number_of_circles": 1,
+    "iou_score": 1.0,
+    "precision": 1.0,
+    "recall": 1.0
+  },
+  "error_statistics": {
+    "extra_pixels": 0,
+    "uncovered_pixels": 0,
+    "extra_percentage": 0.0,
+    "uncovered_percentage": 0.0
+  },
+  "circles": [
+    {
+      "id": 1,
+      "center": {
+        "x": 200.01913543049983,
+        "y": 200.0
+      },
+      "radius": 80.01502604855834,
+      "diameter": 160.03005209711668,
+      "area": 20113.74660809231,
+      "coverage_of_circle": 1.0,
+      "coverage_of_target": 1.0
+    }
+  ]
+}

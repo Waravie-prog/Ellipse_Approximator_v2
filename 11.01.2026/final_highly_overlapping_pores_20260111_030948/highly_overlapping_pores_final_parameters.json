@@ -1,0 +1,46 @@
+{
+  "image_info": {
+    "width": 400,
+    "height": 400,
+    "original_area": 18153,
+    "processing_time": "2026-01-11 03:10:32"
+  },
+  "approximation_metrics": {
+    "number_of_circles": 2,
+    "iou_score": 0.9105317249959431,
+    "precision": 0.9801931845338779,
+    "recall": 0.9260457898632815
+  },
+  "error_statistics": {
+    "extra_pixels": 334,
+    "uncovered_pixels": 1320,
+    "extra_percentage": 1.8399162672836447,
+    "uncovered_percentage": 7.271525367707817
+  },
+  "circles": [
+    {
+      "id": 1,
+      "center": {
+        "x": 146.0120144101016,
+        "y": 200.99785222347555
+      },
+      "radius": 57.00397822022457,
+      "diameter": 114.00795644044914,
+      "area": 10208.459347240057,
+      "coverage_of_circle": 0.9964580873671782,
+      "coverage_of_target": 0.5579243100313998
+    },
+    {
+      "id": 2,
+      "center": {
+        "x": 223.9853850387058,
+        "y": 200.00306703349906
+      },
+      "radius": 54.000994413723824,
+      "diameter": 108.00198882744765,
+      "area": 9161.221577602162,
+      "coverage_of_circle": 0.9663960306720794,
+      "coverage_of_target": 0.47209827576709085
+    }
+  ]
+}
