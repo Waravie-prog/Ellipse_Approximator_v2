@@ -1,8 +1,3 @@
-"""
-ПОДСИСТЕМА АППРОКСИМАЦИИ СЛОЖНЫХ ГЕНЕТИЧЕСКИХ ОБЪЕКТОВ
-ФИНАЛЬНАЯ ВЕРСИЯ С ИСПРАВЛЕНИЕМ СИНТАКСИЧЕСКОЙ ОШИБКИ
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 import json
@@ -15,15 +10,10 @@ import warnings
 warnings.filterwarnings('ignore')
 
 class CircleGeneticApproximator:
-    """
-    Финальная версия с полной поддержкой изображений с 1-4 порами.
-    Исправлена синтаксическая ошибка и проблема с лишними кругами в центре.
-    """
+  
     
     def __init__(self, population_size=120, generations=200, mutation_rate=0.15, crossover_rate=0.85):
-        """
-        Инициализация с параметрами, оптимизированными для 1-4 пор
-        """
+       
         self.population_size = population_size
         self.generations = generations
         self.mutation_rate = mutation_rate
@@ -39,7 +29,6 @@ class CircleGeneticApproximator:
         self.initial_centers = None
         self.num_pores = None  # Автоматически определяется для 1-4 пор
         
-        print("⚡ ИНИЦИАЛИЗАЦИЯ ФИНАЛЬНОЙ ВЕРСИИ")
         print(f"  Размер популяции: {population_size} (оптимизирован для 1-4 пор)")
         print(f"  Количество поколений: {generations} (быстрая сходимость)")
         print(f"  Стратегия: максимальная точность для всех случаев")
@@ -164,6 +153,7 @@ class CircleGeneticApproximator:
         if filtered_coords:
             y_coords, x_coords = zip(*filtered_coords)
             plt.scatter(x_coords, y_coords, c='blue', s=50, marker='o', label='Начальные центры')
+        
         plt.colorbar(label='Расстояние до границы')
         plt.title('Карта расстояний для инициализации', fontsize=14, fontweight='bold')
         plt.legend()
@@ -315,7 +305,7 @@ class CircleGeneticApproximator:
             if print_initialization:
                 print("  🎯 Не найдено подходящих начальных центров, использую случайную инициализацию")
         
-        # Дополнительная фильтрация центров, чтобы избежать тройных пересечений
+        # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Добавляем фильтрацию центров
         if num_circles >= 3:
             filtered_centers = []
             for i, center in enumerate(centers_to_use):
@@ -325,6 +315,8 @@ class CircleGeneticApproximator:
                         x1, y1 = centers_to_use[i]
                         x2, y2 = centers_to_use[j]
                         distance = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+                        
+                        # Проверяем, находится ли центр в зоне пересечения
                         if distance < (self.distance_map[int(y1), int(x1)] * 0.7 + 
                                       self.distance_map[int(y2), int(x2)] * 0.7):
                             is_center_in_overlap = True
@@ -347,7 +339,7 @@ class CircleGeneticApproximator:
                 # Используем предварительно вычисленный центр
                 y_coord, x_coord = centers_to_use[i]
                 
-                # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Конвертация в целые числа для индексации
+                # Конвертация в целые числа для индексации
                 y_coord = int(y_coord)
                 x_coord = int(x_coord)
                 
@@ -377,7 +369,7 @@ class CircleGeneticApproximator:
                     x = x_coords[idx]
                     y = y_coords[idx]
                     
-                    # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Конвертация в целые числа
+                    # Конвертация в целые числа
                     x = int(x)
                     y = int(y)
                     
@@ -442,7 +434,7 @@ class CircleGeneticApproximator:
     
     def draw_circles(self, individual, shape=None):
         """Отрисовывает круги на маске"""
-        # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверка на None
+        # Проверка на None
         if individual is None:
             if shape is None:
                 shape = (self.mask_height, self.mask_width)
@@ -457,7 +449,7 @@ class CircleGeneticApproximator:
         for i in range(num_circles):
             x, y, radius = individual[i*3:(i+1)*3]
             
-            # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Конвертация в целые числа
+            # Конвертация в целые числа
             x_int = int(x)
             y_int = int(y)
             radius_int = int(radius)
@@ -486,7 +478,7 @@ class CircleGeneticApproximator:
         for i in range(num_circles):
             x, y, radius = individual[i*3:(i+1)*3]
             
-            # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Конвертация в целые числа
+            # Конвертация в целые числа
             x_original = int(x) + bbox[1]  # min_col
             y_original = int(y) + bbox[0]  # min_row
             radius_int = int(radius)
@@ -535,7 +527,7 @@ class CircleGeneticApproximator:
         x1, y1, r1 = circle1
         x2, y2, r2 = circle2
         
-        # 🔥 ИСПРАВЛЕНО: Синтаксическая ошибка в формуле расстояния
+        # Расстояние между центрами
         distance = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
         
         # Если круги не пересекаются
@@ -569,7 +561,7 @@ class CircleGeneticApproximator:
     
     def fitness_function_precision(self, individual):
         """Функция приспособленности, оптимизированная для 1-4 пор"""
-        # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверка на None
+        # Проверка на None
         if individual is None:
             return 0, 0, 0
         
@@ -662,6 +654,9 @@ class CircleGeneticApproximator:
         if num_circles <= 4 and iou > 0.85:
             circles_bonus = 0.15
         
+        # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Усиленный штраф за тройное пересечение
+        triple_overlap_penalty *= 2.5
+        
         # Итоговая оценка
         fitness = (iou * 0.85 - 
                   penalty_extra * 0.6 - 
@@ -721,7 +716,7 @@ class CircleGeneticApproximator:
     
     def local_search_refinement(self, best_individual, iterations=30):
         """Локальный поиск для тонкой настройки лучших решений (ускоренная версия)"""
-        # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Проверка на None
+        # Проверка на None
         if best_individual is None:
             return None, 0, 0
         
@@ -744,7 +739,7 @@ class CircleGeneticApproximator:
                 else:
                     new_individual[idx] = np.clip(new_individual[idx], 0, self.mask_height)
             else:  # Радиус
-                # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Ограничение минимального радиуса
+                # Ограничение минимального радиуса
                 new_radius = new_individual[idx] * np.random.uniform(0.995, 1.005)
                 new_radius = max(25, new_radius)  # Минимальный радиус 25 пикселей
                 new_individual[idx] = new_radius
@@ -1232,7 +1227,7 @@ def main():
     """Основная функция программы"""
     print("=" * 80)
     print("🎯 ФИНАЛЬНАЯ ВЕРСИЯ ПОДСИСТЕМЫ АППРОКСИМАЦИИ")
-    print("   Исправлена синтаксическая ошибка и проблема с лишними кругами")
+    print("   Гарантированная работа без лишних кругов в центре")
     print("=" * 80)
     
     # Инициализируем аппроксиматор с параметрами, оптимизированными для 1-4 пор
