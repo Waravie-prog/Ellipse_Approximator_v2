@@ -165,7 +165,7 @@ class CircleGeneticApproximator:
         - self.bbox: bounding box объекта
         - self.mask_height, self.mask_width: размеры маски
         """
-        print(f"\n📁 Загрузка изображения: {image_path}")
+        print(f"\n Загрузка изображения: {image_path}")
         
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"Файл {image_path} не найден!")
@@ -225,7 +225,7 @@ class CircleGeneticApproximator:
         Карта расстояний показывает для каждого пикселя объекта расстояние 
         до ближайшего фона. Локальные максимумы карты соответствуют центрам пор.
         """
-        print("\n🔍 ПРЕДОБРАБОТКА ИЗОБРАЖЕНИЯ")
+        print("\n ПРЕДОБРАБОТКА ИЗОБРАЖЕНИЯ")
         
         # Создаем карту расстояний
         # distance_map[y, x] = расстояние от пикселя (y, x) до ближайшего фона
@@ -426,7 +426,7 @@ class CircleGeneticApproximator:
         }
         
         if verbose:
-            print(f"\n✅ РЕЗУЛЬТАТ:")
+            print(f"\n РЕЗУЛЬТАТ:")
             print(f"   IoU = {final_iou:.4f}")
             print(f"   Время = {end_time - start_time:.2f} сек")
             print(f"   Окружностей = {num_circles}")
@@ -571,7 +571,7 @@ class CircleGeneticApproximator:
         - 30% особей: умная инициализация (на основе карты расстояний)
         - 70% особей: случайная инициализация (для разнообразия)
         """
-        print(f"\n🧬 СОЗДАНИЕ ПОПУЛЯЦИИ ИЗ {self.population_size} ОСОБЕЙ")
+        print(f"\n СОЗДАНИЕ ПОПУЛЯЦИИ ИЗ {self.population_size} ОСОБЕЙ")
         print(f"  Количество окружностей: {num_circles}")
         
         population = []
@@ -587,7 +587,7 @@ class CircleGeneticApproximator:
             
             population.append(individual)
         
-        print("  ✓ Популяция создана")
+        print(" Популяция создана")
         return population
     
     def draw_circles(self, individual, shape=None):
@@ -938,7 +938,7 @@ class CircleGeneticApproximator:
         3. Локальный поиск лучшей особи
         """
         if verbose:
-            print(f"\n🚀 ЗАПУСК ОПТИМИЗАЦИИ")
+            print(f"\n ЗАПУСК ОПТИМИЗАЦИИ")
             print(f"  Количество окружностей: {num_circles}")
             print(f"  Целевой IoU: > 0.85")
         
@@ -1023,8 +1023,8 @@ class CircleGeneticApproximator:
                 best_individual, iterations=self.LOCAL_SEARCH_ITERATIONS)
         
         if verbose:
-            print(f"\n✅ ОПТИМИЗАЦИЯ ЗАВЕРШЕНА ЧЕРЕЗ {end_time - start_time:.2f} СЕКУНД")
-            print(f"🎯 ФИНАЛЬНЫЙ РЕЗУЛЬТАТ: IoU = {best_iou:.4f}")
+            print(f"\n ОПТИМИЗАЦИЯ ЗАВЕРШЕНА ЧЕРЕЗ {end_time - start_time:.2f} СЕКУНД")
+            print(f" ФИНАЛЬНЫЙ РЕЗУЛЬТАТ: IoU = {best_iou:.4f}")
             print(f"   Количество окружностей: {num_circles}")
         
         return best_individual, fitness_history, iou_history, overlap_history, best_iou, extra_area_history, uncovered_area_history
@@ -1041,13 +1041,13 @@ class CircleGeneticApproximator:
         Запускает алгоритм для разных значений N и собирает результаты
         """
         print("="*60)
-        print("🔬 ИССЛЕДОВАНИЕ ВЛИЯНИЯ ЧИСЛА ОКРУЖНОСТЕЙ (N)")
+        print(" ИССЛЕДОВАНИЕ ВЛИЯНИЯ ЧИСЛА ОКРУЖНОСТЕЙ (N)")
         print("="*60)
         
         results = {}
         
         for n in n_range:
-            print(f"\n  🔹 N = {n}...", end="  ")
+            print(f"\n   N = {n}...", end="  ")
             result = self.approximate_blob(
                 local_mask, n, offset_x, offset_y, verbose=False)
             results[n] = result
@@ -1063,7 +1063,7 @@ class CircleGeneticApproximator:
         Запускает алгоритм несколько раз с разными seed для оценки воспроизводимости
         """
         print("="*60)
-        print(f"🔬 ПРОВЕРКА УСТОЙЧИВОСТИ (N={N}, {num_runs} запусков)")
+        print(f" ПРОВЕРКА УСТОЙЧИВОСТИ (N={N}, {num_runs} запусков)")
         print("="*60)
         
         iou_values = []
@@ -1151,7 +1151,7 @@ class CircleGeneticApproximator:
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight', 
                        facecolor='white')
-            print(f"✓ Визуализация сохранена: {save_path}")
+            print(f" Визуализация сохранена: {save_path}")
         
         plt.show()
         return fig
@@ -1241,7 +1241,7 @@ class CircleGeneticApproximator:
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight', 
                        facecolor='white')
-            print(f"✓ График IoU от N сохранён: {save_path}")
+            print(f" График IoU от N сохранён: {save_path}")
         
         plt.show()
     
@@ -1332,7 +1332,7 @@ class CircleGeneticApproximator:
 def main():
     """Основная функция программы"""
     print("=" * 80)
-    print("🎯 ПОДСИСТЕМА АППРОКСИМАЦИИ МОРФОЛОГИЧЕСКИХ ОБЪЕКТОВ")
+    print(" ПОДСИСТЕМА АППРОКСИМАЦИИ МОРФОЛОГИЧЕСКИХ ОБЪЕКТОВ")
     print("   Версия для ВКР с полным исследованием алгоритма")
     print("=" * 80)
     
@@ -1350,7 +1350,7 @@ def main():
         and 'preview' not in f.lower()
     ]
     
-    print("\n📋 ДОСТУПНЫЕ ИЗОБРАЖЕНИЯ:")
+    print("\n ДОСТУПНЫЕ ИЗОБРАЖЕНИЯ:")
     if available_masks:
         for i, mask in enumerate(available_masks, 1):
             print(f"   {i}. {mask}")
@@ -1359,21 +1359,21 @@ def main():
         return
     
     try:
-        choice = int(input(f"\n👉 Выберите изображение (1-{len(available_masks)}): ")) - 1
+        choice = int(input(f"\n Выберите изображение (1-{len(available_masks)}): ")) - 1
         selected_file = available_masks[choice]
     except (ValueError, IndexError):
         if available_masks:
-            print("⚠️ Неверный выбор. Используется первая маска.")
+            print(" Неверный выбор. Используется первая маска.")
             selected_file = available_masks[0]
         else:
-            print("❌ Нет доступных изображений.")
+            print(" Нет доступных изображений.")
             return
     
     # Загружаем изображение
     try:
         approximator.load_image(selected_file)
     except Exception as e:
-        print(f"❌ Ошибка загрузки: {e}")
+        print(f" Ошибка загрузки: {e}")
         return
     
     # Создаем папку для результатов
@@ -1382,32 +1382,32 @@ def main():
     
     # Запрашиваем у пользователя диапазон тестирования N
     print("\n" + "="*80)
-    print("📊 НАСТРОЙКА ДИАПАЗОНА ТЕСТИРОВАНИЯ")
+    print(" НАСТРОЙКА ДИАПАЗОНА ТЕСТИРОВАНИЯ")
     print("="*80)
     
     try:
         min_n = int(input(" Минимальное количество окружностей для тестирования: "))
-        max_n = int(input("👉 Максимальное количество окружностей для тестирования: "))
+        max_n = int(input(" Максимальное количество окружностей для тестирования: "))
         
         # Валидация ввода
         if min_n < 1:
             print("️ Минимальное значение не может быть меньше 1. Установлено 1.")
             min_n = 1
         if max_n < min_n:
-            print(f"⚠️ Максимальное значение не может быть меньше минимального. Установлено {min_n}.")
+            print(f" Максимальное значение не может быть меньше минимального. Установлено {min_n}.")
             max_n = min_n
         if max_n > 10:
-            print("⚠️ Максимальное значение ограничено 10 для производительности.")
+            print(" Максимальное значение ограничено 10 для производительности.")
             max_n = 10
             
-        print(f"\n✅ Диапазон тестирования: от {min_n} до {max_n} окружностей")
+        print(f"\n Диапазон тестирования: от {min_n} до {max_n} окружностей")
     except (ValueError, KeyboardInterrupt):
-        print("\n⚠️ Неверный ввод. Используем диапазон по умолчанию: 1-4")
+        print("\n Неверный ввод. Используем диапазон по умолчанию: 1-4")
         min_n = 1
         max_n = 4
     
     # Поиск оптимального количества окружностей
-    print("\n🎯 ПОИСК ОПТИМАЛЬНОГО КОЛИЧЕСТВА ОКРУЖНОСТЕЙ...")
+    print("\n ПОИСК ОПТИМАЛЬНОГО КОЛИЧЕСТВА ОКРУЖНОСТЕЙ...")
     
     best_iou = 0
     best_n = min_n
@@ -1423,7 +1423,7 @@ def main():
             best_n = n
             best_result = result
     
-    print(f"\n🏆 ОПТИМАЛЬНОЕ N = {best_n} (IoU = {best_iou:.4f})")
+    print(f"\n ОПТИМАЛЬНОЕ N = {best_n} (IoU = {best_iou:.4f})")
     
     # Визуализация
     result_image_path = approximator.get_results_path(f'{base_name}_main_result.png')
@@ -1451,17 +1451,17 @@ def main():
     
     # Финальный отчет
     print("\n" + "=" * 80)
-    print("🎉 АППРОКСИМАЦИЯ УСПЕШНО ЗАВЕРШЕНА!")
+    print(" АППРОКСИМАЦИЯ УСПЕШНО ЗАВЕРШЕНА!")
     print("=" * 80)
-    print(f"📁 Результаты: {results_dir}")
+    print(f" Результаты: {results_dir}")
     print(f"\n КЛЮЧЕВЫЕ РЕЗУЛЬТАТЫ:")
     print(f"   Оптимальное количество окружностей: {best_n}")
     print(f"   Достигнутый IoU: {best_iou:.4f}")
-    print(f"   Статус: {'🎯 IoU > 0.85' if best_iou >= 0.85 else '⚠️ Требуется проверка'}")
+    print(f"   Статус: {' IoU > 0.85' if best_iou >= 0.85 else 'Требуется проверка'}")
     print(f"\n СОЗДАННЫЕ ФАЙЛЫ:")
-    print(f"   📄 {base_name}_main_result.png - визуализация")
-    print(f"   📄 {base_name}_convergence.png - графики сходимости")
-    print(f"   📄 {base_name}_final_parameters.json - параметры")
+    print(f"    {base_name}_main_result.png - визуализация")
+    print(f"    {base_name}_convergence.png - графики сходимости")
+    print(f"    {base_name}_final_parameters.json - параметры")
     print("=" * 80)
 
 
